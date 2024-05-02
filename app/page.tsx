@@ -1,54 +1,45 @@
-import DeployButton from "../components/DeployButton";
-import AuthButton from "../components/AuthButton";
+import AddTaskForm from "@/components/AddTaskForm";
+import TaskTableSkeleton from "@/components/skeletons";
+import TaskTable from "@/components/taskTable";
+import { Suspense } from 'react';
 import { createClient } from "@/utils/supabase/server";
-import ConnectSupabaseSteps from "@/components/tutorial/ConnectSupabaseSteps";
-import SignUpUserSteps from "@/components/tutorial/SignUpUserSteps";
-import Header from "@/components/Header";
+import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button"
 
 export default async function Index() {
-  const canInitSupabaseClient = () => {
-    // This function is just for the interactive tutorial.
-    // Feel free to remove it once you have Supabase connected.
-    try {
-      createClient();
-      return true;
-    } catch (e) {
-      return false;
-    }
-  };
+  const supabase = createClient();
 
-  const isSupabaseConnected = canInitSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const signOut = async () => {
+    "use server";
+
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    return redirect("/login");
+  }
+
+  if (!user) {
+    return redirect("/login");
+  }
 
   return (
-    <div className="flex-1 w-full flex flex-col gap-20 items-center">
-      <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-        <div className="w-full max-w-4xl flex justify-between items-center p-3 text-sm">
-          <DeployButton />
-          {isSupabaseConnected && <AuthButton />}
+    <div className="w-full max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="p-4">
+        <div className="flex items-center">
+          <h1 className="text-xl font-bold text-gray-800">Todoリスト</h1>
+          <p className="ml-3 mr-3">{user.email}</p>
+          <form action={signOut}>
+            <Button>Logout</Button>
+          </form>
         </div>
-      </nav>
-
-      <div className="animate-in flex-1 flex flex-col gap-20 opacity-0 max-w-4xl px-3">
-        <Header />
-        <main className="flex-1 flex flex-col gap-6">
-          <h2 className="font-bold text-4xl mb-4">Next steps</h2>
-          {isSupabaseConnected ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
-        </main>
+        <AddTaskForm />
+        <Suspense fallback={<TaskTableSkeleton />}>
+          <TaskTable />
+        </Suspense>
       </div>
-
-      <footer className="w-full border-t border-t-foreground/10 p-8 flex justify-center text-center text-xs">
-        <p>
-          Powered by{" "}
-          <a
-            href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
-            target="_blank"
-            className="font-bold hover:underline"
-            rel="noreferrer"
-          >
-            Supabase
-          </a>
-        </p>
-      </footer>
     </div>
   );
 }
