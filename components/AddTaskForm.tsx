@@ -1,34 +1,36 @@
 "use client";
+
 import { insertTask } from "@/lib/data"
-import { useState } from "react";
 import { Input } from "./ui/input";
 import { toast } from "sonner"
+import { SubmitButton } from "@/app/login/submit-button";
+import { useRef } from "react";
 
 export default function AddTaskForm() {
-  const [text, setText] = useState("");
-  // TODO: Use useFormStatus from react-dom
-  const [isLoading, setIsLoading] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const onSubmit = async (event: any) => {
-    event.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      await insertTask(text);
-      setText("")
-      toast.success("作成しました。")
-    } catch (error) {
-      console.log(error);
+  const onSubmit = async (formData: FormData) => {
+    const error = await insertTask(formData);
+    if (formRef.current) {
+      formRef.current.reset();
     }
-    setIsLoading(false)
+    if (error) {
+      toast.error(`タスクの追加に失敗しました。 <br> エラーコード: ${error}`);
+      return console.error("ErrorCode:", error);
+    }
+    toast.success("タスクを追加しました");
   }
-  
+
   return (
-    <form className="mt-4" onSubmit={onSubmit}>
-      <Input type="text" placeholder="新しいタスクを入力してください" required value={text} onChange={(e) => setText(e.target.value)} />
-      <button type="submit" disabled={isLoading} className="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg px-4 py-2">
-        {isLoading ? '処理中...' : '追加'}
-      </button>
+    <form className="mt-4" ref={formRef}>
+      <Input type="text" name="task" placeholder="新しいタスクを入力してください" required />
+      <SubmitButton
+        formAction={onSubmit}
+        className="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg px-4 py-2"
+        pendingText="作成中..."
+      >
+        追加
+      </SubmitButton>
     </form>
   )
 }

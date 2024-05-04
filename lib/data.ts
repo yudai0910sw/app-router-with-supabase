@@ -3,18 +3,25 @@
 import { unstable_noStore as noStore } from 'next/cache';
 import { supabaseClient } from '@/utils/supabase/client';
 import type { Tables } from '@/types/supabase';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/server';
 
 export async function fetchTasks(): Promise<Tables<'tasks'>[]> {
   noStore();
+
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // await new Promise(resolve => setTimeout(resolve, 1000));
 
   try {
     const { data: tasks, error } = await supabaseClient
-      .from('tasks') 
-      .select('*');
+      .from('tasks')
+      .select('*')
+      .match({ user_id: user?.id });
 
     if (error) {
       console.error('Database Error:', error); 
@@ -28,14 +35,23 @@ export async function fetchTasks(): Promise<Tables<'tasks'>[]> {
   }
 };
 
-export async function insertTask(text: string): Promise<void> {
+export async function insertTask(formData: FormData) {
   noStore();
+  const taskText = formData.get("task") as string;
+  
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { error } = await supabaseClient
     .from('tasks')
-    .insert({ text });
+    .insert({ text: taskText, user_id: user?.id });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error('Database Error:', error);
+    return error.code;
+  }
 
   revalidatePath('/');
   redirect('/');

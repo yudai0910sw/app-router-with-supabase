@@ -34,6 +34,8 @@ export default function Login({
     const origin = headers().get("origin");
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const firstName = formData.get("firstName") as string;
+    const lastName = formData.get("lastName") as string;
     const supabase = createClient();
 
     const { error } = await supabase.auth.signUp({
@@ -41,6 +43,10 @@ export default function Login({
       password,
       options: {
         emailRedirectTo: `${origin}/auth/callback`,
+        data:{
+          firstName: firstName,
+          lastName: lastName,
+        }
       },
     });
 
@@ -94,6 +100,29 @@ export default function Login({
           placeholder="••••••••"
           required
         />
+        
+        <label className="text-md" htmlFor="firstName">
+          firstName
+        </label>
+        <input
+          className="rounded-md px-4 py-2 bg-inherit border mb-6"
+          type="name"
+          name="firstName"
+          placeholder="firstName"
+          required
+        />
+
+        <label className="text-md" htmlFor="lastName">
+          lastName
+        </label>
+        <input
+          className="rounded-md px-4 py-2 bg-inherit border mb-6"
+          type="name"
+          name="lastName"
+          placeholder="lastName"
+          required
+        />
+
         <SubmitButton
           formAction={signIn}
           className="bg-green-700 rounded-md px-4 py-2 text-foreground mb-2"

@@ -14,16 +14,19 @@ export type Database = {
           id: number
           text: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           id?: number
-          text?: string
+          text?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           id?: number
           text?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
